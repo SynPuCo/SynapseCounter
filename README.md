@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Synapse Counter plug-in for ImageJ, developed by Egor Dzyubenko and Andrey Rozenberg, is a helpful scientific tool designed for synapse formation studies. It is developed for rapid, automatic, unbiased quantification of synaptic puncta revealed by synaptic marker proteins fluorescence. You will find some helpful guidelines about Synapse Counter usage below. In case you have additional questions, do not hesitate to contact us by e-mail: [egor.dzyubenko@rub.de](mailto:egor.dzyubenko@rub.de)
+Synapse Counter plug-in for [ImageJ](http://imagej.nih.gov/ij/), developed by Egor Dzyubenko and Andrey Rozenberg, is a helpful scientific tool designed for synapse formation studies. It is developed for rapid, automatic, unbiased quantification of synaptic puncta revealed by synaptic marker proteins fluorescence. You will find some helpful guidelines about Synapse Counter usage below. In case you have additional questions, do not hesitate to contact us by e-mail: [egor.dzyubenko@rub.de](mailto:egor.dzyubenko@rub.de)
 
 ## Installation and requirements
 
@@ -11,10 +11,10 @@ The easiest option is to download the latest pre-compiled [release](https://gith
 If you want to compile the code your self, clone the repository (`git clone https://github.com/SynPuCo/SynapseCounter.git`) or download it from your browser as [zip](https://github.com/SynPuCo/SynapseCounter/archive/master.zip). Compilation goes as follows:
 
 	name=Synapse_Counter
-	plugins_dir=/opt/Fiji.app/plugins/ # or other relevant location
-	javac "$name.java" MyParticleAnalyzer.java -cp /opt/Fiji.app/jars/*:.
+	imagej=/opt/Fiji.app # or other relevant location
+	javac "$name.java" MyParticleAnalyzer.java -cp "$imagej"/jars/*:.
 	jar -cf "$name.jar" $name.class MyParticleAnalyzer.class plugins.config
-	mv "$name.jar" 
+	mv "$name.jar" "$imagej/plugins/"
 	rm *.class
 
 Either way the plugin is than available under Plugins → Analyze → Synapse Counter
@@ -23,7 +23,7 @@ This plug-in is supported by ImageJ versions starting 1.48, as it exploits the f
 
 ## Recommended formats
 
-The plug-in supports RGB and multichannel image formats, which are supported by ImageJ. This includes png, bmp, jpeg, tiff, lsm and some others. However, we recommend to use tiff format or the raw multichannel images from your microscope (like lsm for Carl Zeiss microscopes), because these images are not altered due to data compression. If you are using compressed picture formats (like png), please pay attention to use images of same formats throughout your experiments, as the outcome of quantification might subtly depend on compression method. The plug-in will not read database files or stacked images.
+The plug-in supports RGB and multichannel image formats, which are supported by ImageJ. This includes png, bmp, jpeg, tiff, lsm and some others. However, we recommend to use tiff format or the raw multichannel images from your microscope (like LSM for Carl Zeiss microscopes), because these images are not altered due to data compression. If you are using compressed picture formats (like PNG), please pay attention to use images of same formats throughout your experiments, as the outcome of quantification might subtly depend on compression method. The plug-in will not read database files or stacked images.
 
 ## How it works?
 
@@ -76,12 +76,14 @@ Synapse Counter exploits the built-in Auto Threshold function of ImageJ, which p
 
 ### Analyze Particles
 
-The parameters of the built-in ImageJ Analyse Particles function are introduced to overcome the possible artifacts coming from the high noise or staining artifacts. The user can define minimal and maximum size of presynaptic and postsynaptic proteins puncta that correspond to specific staining. The results will be then generated regarding only the particles which size in within the defined interval. 
+The parameters of the built-in ImageJ Analyse Particles function are introduced to overcome the possible artifacts coming from the high noise or staining artifacts. The user can define minimum and maximum size of presynaptic and postsynaptic proteins puncta that correspond to specific staining. The results will be then generated regarding only the particles which size in within the defined interval.
+
 To optimize the parameters of puncta quantification for a particular case, we recommend the following:
 
 1. Run a few test images (3 per condition) with Synapse Counter plug-in using the “batch mode” option, while having the “Save intermediate files” activated;
 2. Open the intermediate files – they contain binary images with presynaptic and postsynaptic channels;
 3. Select the smallest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Important: remove the scale before measuring (Analyse->Set Scale->tick “Remove scale”+”Global”). Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Min presynaptic particle size” value.
 4. Select the biggest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Max presynaptic particle size” value
-5. Repeat steps iii and iv for the postsynaptic channel
-The minimal size of colocalized puncta is automatically defined as 1/3 of the minimal “Min particle size” value, maximal size is defined as the maximal “Max particle size” value. This estimate bases on the idea that presynaptic and postsynaptic puncta should be overlapped by 33-100% to be considered as colocalized. Thus, this parameter should be in principle of no need to adjust.
+5. Repeat steps 3. and 4. for the postsynaptic channel
+
+The minimum size of colocalized puncta is automatically defined as 1/3 of the minimum “Min particle size” value, maximum size is defined as the maximum “Max particle size” value. This estimate bases on the idea that presynaptic and postsynaptic puncta should be overlapped by 33-100% to be considered as colocalized. Thus, this parameter should be in principle of no need to adjust.
