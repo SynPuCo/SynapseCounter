@@ -528,7 +528,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 	 * Event listener to launch folder choice windows when requested
 	 * and reset defaults if the "reset" button was pressed.
 	 * <p>
-	 * Implrementation of ActionListener.actionPerformed()
+	 * Implementation of ActionListener.actionPerformed()
 	 *
 	 * @param   e    the event
 	 * @return       true if OK, false otherwise
@@ -587,7 +587,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 	 * Another event listener to apply relevant changes to the dialog 
 	 * depending on user-specified options
 	 * <p>
-	 * Implrementation of DialogListener.dialogItemChanged()
+	 * Implementation of DialogListener.dialogItemChanged()
 	 *
 	 * @param   e    the event
 	 * @return       true if OK, false otherwise
@@ -612,7 +612,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 	 * Yet another event listener to apply relevant changes to the dialog 
 	 * depending on user-specified options
 	 * <p>
-	 * Implrementation of ItemListener.itemStateChanged()
+	 * Implementation of ItemListener.itemStateChanged()
 	 *
 	 * @param   e    the event
 	 */

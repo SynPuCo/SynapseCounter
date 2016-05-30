@@ -47,7 +47,7 @@ public class MyParticleAnalyzer extends ParticleAnalyzer {
 	}
 
 	/**
-	 * Implementation ParticleAnalyzer.saveResults()
+	 * Implementation of ParticleAnalyzer.saveResults()
 	 *
 	 * @param stats the data the current particle
 	 * @param roi   not used
@@ -59,7 +59,7 @@ public class MyParticleAnalyzer extends ParticleAnalyzer {
 	}
 
 	/**
-	 * A get for the particle Count
+	 * A get for the Particle Count
 	 *
 	 * @returns myCount
 	 */

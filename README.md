@@ -2,13 +2,13 @@
 
 ## Introduction
 
-Synapse Counter plug-in for [ImageJ](http://imagej.nih.gov/ij/), developed by Egor Dzyubenko and Andrey Rozenberg, is a helpful scientific tool designed for synapse formation studies. It is developed for rapid, automatic, unbiased quantification of synaptic puncta revealed by synaptic marker proteins fluorescence. You will find some helpful guidelines about Synapse Counter usage below. In case you have additional questions, do not hesitate to contact us by e-mail: [egor.dzyubenko@rub.de](mailto:egor.dzyubenko@rub.de)
+Synapse Counter plug-in for [ImageJ](http://imagej.nih.gov/ij/), developed by Egor Dzyubenko and Andrey Rozenberg, is a helpful scientific tool designed for synapse formation studies. It is developed for rapid, automatic, unbiased quantification of synaptic puncta revealed by synaptic marker proteins fluorescence. You will find some helpful guidelines about Synapse Counter usage below. In case you have additional questions, do not hesitate to contact us by e-mail: [egor.dzyubenko@rub.de](mailto:egor.dzyubenko@rub.de), or open [an issue](https://github.com/SynPuCo/SynapseCounter/issues).
 
 ## Installation and requirements
 
 The easiest option is to download the latest pre-compiled [release](https://github.com/SynPuCo/SynapseCounter/releases) and copy the jar file in the plugins folder of ImageJ/Fiji (e.g. `/opt/Fiji.app/plugins/`).
 
-If you want to compile the code your self, clone the repository (`git clone https://github.com/SynPuCo/SynapseCounter.git`) or download it from your browser as [zip](https://github.com/SynPuCo/SynapseCounter/archive/master.zip). Compilation goes as follows:
+If you want to compile the code your self, clone the repository (`git clone https://github.com/SynPuCo/SynapseCounter.git`), download it as [zip](https://github.com/SynPuCo/SynapseCounter/archive/master.zip) or get the code from the [latest release](https://github.com/SynPuCo/SynapseCounter/releases/latest). Compilation goes as follows:
 
 	name=Synapse_Counter
 	imagej=/opt/Fiji.app # or other relevant location
@@ -19,11 +19,11 @@ If you want to compile the code your self, clone the repository (`git clone http
 
 Either way the plugin is than available under Plugins → Analyze → Synapse Counter
 
-This plug-in is supported by ImageJ versions starting 1.48, as it exploits the functions Auto Threshold and Watershed, which may not be present in earlier versions.
+This plug-in is supported by ImageJ versions starting from 1.48, as it depends on the functions Auto Threshold and Watershed, which may not be present in earlier versions.
 
 ## Recommended formats
 
-The plug-in supports RGB and multichannel image formats, which are supported by ImageJ. This includes png, bmp, jpeg, tiff, lsm and some others. However, we recommend to use tiff format or the raw multichannel images from your microscope (like LSM for Carl Zeiss microscopes), because these images are not altered due to data compression. If you are using compressed picture formats (like PNG), please pay attention to use images of same formats throughout your experiments, as the outcome of quantification might subtly depend on compression method. The plug-in will not read database files or stacked images.
+The plug-in supports RGB and multichannel image formats supported by ImageJ. This includes png, bmp, jpeg, tiff, lsm and some others. However, we recommend to use tiff format or the raw multichannel images from your microscope (like LSM for Carl Zeiss microscopes), because these images are not altered due to data compression. If you are using compressed picture formats (like PNG), please pay attention to use images of same formats throughout your experiments, as the outcome of quantification might subtly depend on compression method. The plug-in will not read database files or stacked images.
 
 ## How it works?
 
@@ -37,7 +37,7 @@ Synapse Counter is a highly adjustable plug-in. If the default parameters that w
 
 #### Default parameters
 
-The default parameters are defined for 1024x1024 pixel images and are suitable for the majority of applications. These parameters are optimal for glutamatergic and gabaergic synapse quantification using VGlut1-PSD95 and VGAT-Gephyrin pairs respectively.
+The default parameters are defined for 1024×1024 pixel images and are suitable for the majority of applications. These parameters are optimal for glutamatergic and GABAergic synapse quantification using VGlut1-PSD95 and VGAT-Gephyrin pairs respectively.
 
 #### Choose input source
 
@@ -57,18 +57,18 @@ Select the channels which your marker proteins belong to (channel number for mul
 
 #### Resize image width
 
-The default parameters are identified for 1024x1024 pixel images. In case you have other resolution, image resizing may be helpful to avoid all other parameters optimization (see below).
+The default parameters are identified for 1024×1024 pixel images. In case you have other resolution, image resizing may be helpful to avoid all other parameters optimization (see below).
 
 ### Image processing
 
-General note: after changing a parameter from this set, the user should manually verify whether the generated binary puncta images correspond to the real synaptic puncta of the source image. We recommend to use “current image” mode for such optomizations
+General note: after changing a parameter from this set, the user should manually verify whether the generated binary puncta images correspond to the real synaptic puncta of the source image. We recommend to use “current image” mode for such optimizations.
 
 #### Rolling ball radius
 This parameter is used for automatic background subtraction by the “Subtract Background” tool of ImageJ. Too small rolling ball radius will lead to the signal loss and will significantly slow down the quantification.
 
 #### Maximum filter radius
 
-To refine the synaptic puncta, Synapse Counter exploits the built-in Maximum Filter, which rounds the synaptic puncta and helps to distinguish them from the background. The values of 1 or 2 pixels are recommended for the images not exceeding 2048x2048 pixels resolution. Higher values may lead to unreliable puncta detection and artifacts.
+To refine the synaptic puncta, Synapse Counter exploits the built-in Maximum Filter, which rounds the synaptic puncta and helps to distinguish them from the background. The values of 1 or 2 pixels are recommended for the images not exceeding 2048×2048 pixels resolution. Higher values may lead to unreliable puncta detection and artifacts.
 
 #### Method for threshold adjustment
 
@@ -80,10 +80,10 @@ The parameters of the built-in ImageJ Analyse Particles function are introduced 
 
 To optimize the parameters of puncta quantification for a particular case, we recommend the following:
 
-1. Run a few test images (3 per condition) with Synapse Counter plug-in using the “batch mode” option, while having the “Save intermediate files” activated;
-2. Open the intermediate files – they contain binary images with presynaptic and postsynaptic channels;
-3. Select the smallest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Important: remove the scale before measuring (Analyse->Set Scale->tick “Remove scale”+”Global”). Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Min presynaptic particle size” value.
-4. Select the biggest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Max presynaptic particle size” value
-5. Repeat steps 3. and 4. for the postsynaptic channel
+1. Run a few test images (3 per condition) with Synapse Counter plug-in using the “batch mode” option, while having the “Save intermediate files” activated.
+2. Open the intermediate files – they contain binary images with presynaptic and postsynaptic channels.
+3. Select the smallest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Important: remove the scale before measuring (Analyze → Set Scale → tick “Remove scale” + ”Global”). Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Min presynaptic particle size” value.
+4. Select the biggest puncta in the presynaptic channel binary image, which corresponds to the real synaptic puncta of the source image, with the “magic wand” tool, run “measure”. Repeat the procedure for all test images. The mean value of the obtained “area” results will give a good estimate for the “Max presynaptic particle size” value.
+5. Repeat steps 3. and 4. for the postsynaptic channel.
 
-The minimum size of colocalized puncta is automatically defined as 1/3 of the minimum “Min particle size” value, maximum size is defined as the maximum “Max particle size” value. This estimate bases on the idea that presynaptic and postsynaptic puncta should be overlapped by 33-100% to be considered as colocalized. Thus, this parameter should be in principle of no need to adjust.
+Minimum size of colocalized puncta is automatically defined as 1/3 of the minimum “Min particle size” value, maximum size is defined as the maximum “Max particle size” value. This estimate is based on the idea that presynaptic and postsynaptic puncta should be overlapped by 33-100% to be considered as colocalized. Thus, this parameter should be in principle of no need to adjust.
