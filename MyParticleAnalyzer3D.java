@@ -16,44 +16,34 @@
 
 */
 
-import ij.process.*;
-import ij.gui.*;
-import ij.plugin.filter.*;
-import ij.measure.*;
+import Utilities.Counter3D;
+import Utilities.Object3D;
+import java.util.Vector;
+import ij.ImagePlus;
 
-public class MyParticleAnalyzer extends ParticleAnalyzer {
+public class MyParticleAnalyzer3D {
 	private int myCount = 0;          // total number of particles
 	private double myTotalSize = 0;   // total area of all particles
 	private double mySumSqSize = 0;   // sum of squares of particle area (used for the SD)
 
+	private int minSize = 0;       // min particle size
+	private int maxSize = 0;       // max particle size
+
 	/**
 	 * Constructor.
+	 * minCirc and maxCirc are ignored
 	 */
-	public MyParticleAnalyzer(double minSize, double maxSize, double minCirc, double maxCirc) {
-		super(  ParticleAnalyzer.EXCLUDE_EDGE_PARTICLES + 
-			ParticleAnalyzer.INCLUDE_HOLES +
-			ParticleAnalyzer.SHOW_NONE,
-			Measurements.AREA, null, minSize, maxSize, minCirc, maxCirc);
+	public MyParticleAnalyzer3D(double minSize, double maxSize, double minCirc, double maxCirc) {
+		this.minSize = (int)Math.round(minSize);
+		this.maxSize = (int)Math.round(maxSize);
 	}
-
+	
 	/**
 	 * Reset all summaries for a new analysis.
 	 */
 	public void resetSummaries() {
 		this.myCount     = 0;
 		this.myTotalSize = 0;
-	}
-
-	/**
-	 * Implementation of ParticleAnalyzer.saveResults()
-	 *
-	 * @param stats the data for the current particle
-	 * @param roi   not used
-	 */
-	protected void saveResults(ImageStatistics stats, Roi roi) {
-		this.myCount++;
-		this.myTotalSize += stats.area;
-		this.mySumSqSize += stats.area * stats.area;
 	}
 
 	/**
@@ -68,7 +58,7 @@ public class MyParticleAnalyzer extends ParticleAnalyzer {
 	/**
 	 * A get for the Total Area
 	 *
-	 * @returns TotalArea
+	 * @returns TotalSize
 	 */
 	public double getTotalSize() {
 		return this.myTotalSize;
@@ -89,9 +79,25 @@ public class MyParticleAnalyzer extends ParticleAnalyzer {
 	 *
 	 * @returns   SD
 	 */
-	public double getSizeSD() {
+	public double getAreaSD() {
 		if (this.myCount < 2) return Double.NaN;
 		return (this.myCount * this.mySumSqSize - this.myTotalSize * this.myTotalSize) / this.myCount / (this.myCount - 1);
+	}
+
+	/**
+	 * The main analyze routine.
+	 * Analogous to analyze() from ParticleAnalyzer
+	 */
+	public void analyze(ImagePlus img) {
+		Counter3D myCounter = new Counter3D(img, 1, this.minSize, this.maxSize, true, false);
+		Vector<?> allObjects = (Vector<?>)myCounter.getObjectsList();
+
+		this.myCount = allObjects.size();
+		for (int i = 0; i < this.myCount; i++) {
+			Object3D currObj = (Object3D)allObjects.get(i);
+			this.myTotalSize += currObj.size;
+			this.mySumSqSize += currObj.size * currObj.size;
+		}
 	}
 
 }

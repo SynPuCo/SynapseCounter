@@ -41,14 +41,16 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 	private int resizeWidth;                                     // resize width [0 = no resize]
 	private TextField inputDirField, outputDirField;             // TextField's for folder choice
 	private String inputDir, outputDir;                          // folders
+	private boolean is3d;                                        // 2d/3d flag
 	private Button inputButton, outputButton, resetButton;       // buttons for folder choice and the "reset" button
 
 	private String oldType;                                      // for type tracking
 	private ImageCalculator imageCalculator;                     // ImageCalculator
 	private ResultsTable resultsTable;                           // table to save the results in
-	private MyParticleAnalyzer[] partAnalyzers;                  // array of our MyParticleAnalyzer instances
-	private CheckboxGroup inputBox;                              // checkbox for the type of the input source
-	private Checkbox doOpenedImageButton, doBatchButton, doSubFoldersButton; // checkbox for the respective switchers
+	private MyParticleAnalyzer[] partAnalyzers;                  // array of our MyParticleAnalyzer   instances
+	private MyParticleAnalyzer3D[] partAnalyzers3D;              // array of our MyParticleAnalyzer3D instances
+	private CheckboxGroup inputBox, dimBox;                      // checkbox for the type of the input source
+	private Checkbox doOpenedImageButton, doBatchButton, doSubFoldersButton, is2dButton, is3dButton; // checkbox for the respective switchers
 	private boolean doOutput, doOpenedImage, doSubFolders;       // task switchers
 	private String[] autoMethods = AutoThresholder.getMethods(); // list of AutoThresholder methods
 
@@ -61,19 +63,20 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 
 	// defaults
 
-	public static final String DEF_type             = types[0];
-	public static final double DEF_rollBallRad      = 10;
-	public static final double DEF_maxFiltRad       = 2;
-	public static final String DEF_threshMethod     = "Otsu";
-	public static final double DEF_minSizePre       = 10;
-	public static final double DEF_maxSizePre       = 400;
-	public static final double DEF_minSizePos       = 10;
-	public static final double DEF_maxSizePos       = 400;
-	public static final int    DEF_resizeWidth      = 0;
-	public static final String DEF_preChannelTagRGB = colorChoices[0];
-	public static final String DEF_posChannelTagRGB = colorChoices[1];
-	public static final String DEF_preChannelTag    = channelChoices[0];
-	public static final String DEF_posChannelTag    = channelChoices[2];
+	public static final String  DEF_type             = types[0];
+	public static final double  DEF_rollBallRad      = 10;
+	public static final double  DEF_maxFiltRad       = 2;
+	public static final String  DEF_threshMethod     = "Otsu";
+	public static final double  DEF_minSizePre       = 10;
+	public static final double  DEF_maxSizePre       = 400;
+	public static final double  DEF_minSizePos       = 10;
+	public static final double  DEF_maxSizePos       = 400;
+	public static final int     DEF_resizeWidth      = 0;
+	public static final String  DEF_preChannelTagRGB = colorChoices[0];
+	public static final String  DEF_posChannelTagRGB = colorChoices[1];
+	public static final String  DEF_preChannelTag    = channelChoices[0];
+	public static final String  DEF_posChannelTag    = channelChoices[2];
+	public static final boolean DEF_is3d             = false;
 
 	// default command for AutoThreshold
 
@@ -104,10 +107,18 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		imageCalculator  = new ImageCalculator();
 		double minSize = Math.min(minSizePre, minSizePos) / 3.0;  // colocalization min particle size
 		double maxSize = Math.max(maxSizePre, maxSizePos);        // colocalization max particle size
-		partAnalyzers    = new MyParticleAnalyzer[3];
-		partAnalyzers[0] = new MyParticleAnalyzer(minSizePre, maxSizePre, 0.0, 1.0);
-		partAnalyzers[1] = new MyParticleAnalyzer(minSizePos, maxSizePos, 0.0, 1.0);
-		partAnalyzers[2] = new MyParticleAnalyzer(minSize,    maxSize,    0.0, 1.0);
+		if (is3d) {
+			partAnalyzers3D    = new MyParticleAnalyzer3D[3];
+			partAnalyzers3D[0] = new MyParticleAnalyzer3D(minSizePre, maxSizePre, 0.0, 1.0);
+			partAnalyzers3D[1] = new MyParticleAnalyzer3D(minSizePos, maxSizePos, 0.0, 1.0);
+			partAnalyzers3D[2] = new MyParticleAnalyzer3D(minSize,    maxSize,    0.0, 1.0);
+		} else {
+			partAnalyzers    = new MyParticleAnalyzer[3];
+			partAnalyzers[0] = new MyParticleAnalyzer(minSizePre, maxSizePre, 0.0, 1.0);
+			partAnalyzers[1] = new MyParticleAnalyzer(minSizePos, maxSizePos, 0.0, 1.0);
+			partAnalyzers[2] = new MyParticleAnalyzer(minSize,    maxSize,    0.0, 1.0);
+		}
+
 		if (doOpenedImage) {
 			runSynapseCounterOpenedImage();
 		}
@@ -203,19 +214,32 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		}
 		cleanUp(preChannel);
 		cleanUp(posChannel);
-		synChannel = imageCalculator.run("AND create", preChannel, posChannel);
+
+		String suffix = is3d ? " stack" : "";
+		synChannel = imageCalculator.run("AND create" + suffix, preChannel, posChannel);
 		row = resultsTable.getCounter();
 		resultsTable.setValue("File", row, fileName);
 
 		ImagePlus[] myChannels = new ImagePlus[] { preChannel, posChannel, synChannel };
 		String[]    myPrefixes = new String[]    { "Presyn.",  "Postsyn.", "Coloc."   };
-		String[]    myTags     = new String[]    { "presyn",   "postsyn",  "coloc" };
+		String[]    myTags     = new String[]    { "presyn",   "postsyn",  "coloc"    };
+		int   myCount;
+		double sizeMean;
 		for (int j = 0; j < 3; j++) {
-			partAnalyzers[j].resetSummaries();
-			partAnalyzers[j].analyze(myChannels[j]);
+			if (is3d) {
+				partAnalyzers3D[j].resetSummaries();
+				partAnalyzers3D[j].analyze(myChannels[j]);
+				myCount  = partAnalyzers3D[j].getCount();
+				sizeMean = partAnalyzers3D[j].getSizeMean();
+			} else {
+				partAnalyzers[j].resetSummaries();
+				partAnalyzers[j].analyze(myChannels[j]);
+				myCount  = partAnalyzers[j].getCount();
+				sizeMean = partAnalyzers[j].getSizeMean();
+			}
 			removeOrShowIMP(myChannels[j], doOpenedImage, doOutput, subDir, file, myTags[j]);
-			resultsTable.setValue(myPrefixes[j] + " N",         row, partAnalyzers[j].getCount());
-			resultsTable.setValue(myPrefixes[j] + " mean size", row, partAnalyzers[j].getAreaMean());
+			resultsTable.setValue(myPrefixes[j] + " N",         row, myCount);
+			resultsTable.setValue(myPrefixes[j] + " mean size", row, sizeMean);
 		}
 		resultsTable.show("SynapseCounter results");
 		return true;
@@ -292,14 +316,15 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 
 		if (resizeWidth > 0)
 			IJ.run(channel, "Size...", "width=" + resizeWidth + " constrain average interpolation=Bilinear");
-		IJ.run(channel, "Smooth", "");
-		IJ.run(channel, "Subtract Background...", "rolling=" + rollBallRad);
-		IJ.run(channel, "Maximum...", "radius=" + maxFiltRad);
+		String suffix = is3d ? " stack" : "";
+		IJ.run(channel, "Smooth", suffix);
+		IJ.run(channel, "Subtract Background...", "rolling=" + rollBallRad + suffix);
+		IJ.run(channel, "Maximum...", "radius=" + maxFiltRad + suffix);
 		final double mean = (double)channel.getStatistics(Measurements.MEAN).mean;
-		IJ.run(channel, "Subtract...", "value=" + mean);
-		IJ.run(channel, autoThresholdCmd, "method=[" + threshMethod + "] white");
-		IJ.run(channel, "Make Binary", "");
-		IJ.run(channel, "Watershed", "");
+		IJ.run(channel, "Subtract...", "value=" + mean + suffix);
+		IJ.run(channel, autoThresholdCmd, "method=[" + threshMethod + "] white" + suffix);
+		IJ.run(channel, "Make Binary", suffix);
+		IJ.run(channel, "Watershed", suffix);
 	}
 
 	/**
@@ -366,6 +391,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		gd.addDialogListener(this);
 		oldType = "";
 
+		is3d          = Prefs.get("synapsecounter.is3d",          DEF_is3d);
 		type          = Prefs.get("synapsecounter.type",          DEF_type);
 		doOutput      = Prefs.get("synapsecounter.doOutput",      false);
 		doOpenedImage = Prefs.get("synapsecounter.doOpenedImage", false);
@@ -373,17 +399,30 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 
 		// gd.addMessage(HLINE);
 
-		p = new Panel();
-		p.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		inputBox            = new CheckboxGroup();
 		doOpenedImageButton = new Checkbox(" current image", inputBox,  doOpenedImage);
 		doBatchButton       = new Checkbox(" batch mode:",   inputBox, !doOpenedImage);
 
+		p = new Panel();
+		p.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		doOpenedImageButton.addItemListener(this);
 		doBatchButton.addItemListener(this);
 		p.add(new Label("Choose input source:"));
 		p.add(doOpenedImageButton);
 		p.add(doBatchButton);
+		gd.addPanel(p);
+
+		dimBox              = new CheckboxGroup();
+		is2dButton          = new Checkbox(" 2D", dimBox, !is3d);
+		is3dButton          = new Checkbox(" 3D", dimBox,  is3d);
+
+		p = new Panel();
+		p.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		is2dButton.addItemListener(this);
+		is3dButton.addItemListener(this);
+		p.add(new Label("Input dimesionality:"));
+		p.add(is2dButton);
+		p.add(is3dButton);
 		gd.addPanel(p);
 
 		p = new Panel();
@@ -433,6 +472,8 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		gd.addMessage("Analysis settings:");
 
 		gd.addChoice("Image type:", types, type);
+		// gd.addCheckbox("3-dimesional input", Prefs.get("synapsecounter.is3d", DEF_is3d));
+
 		gd.addChoice("Presynaptic protein channel:",  new String[]{}, "");
 		gd.addChoice("Postsynaptic protein channel:", new String[]{}, "");
 
@@ -441,11 +482,11 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		gd.addNumericField("Maximum filter radius:", Prefs.get("synapsecounter.maxFiltRad",  DEF_maxFiltRad),  1);
 		gd.addChoice("Method for threshold adjustment:", autoMethods, Prefs.get("synapsecounter.threshMethod", DEF_threshMethod));
 
-		gd.addNumericField("Presynaptic particle size:", Prefs.get("synapsecounter.minSizePre", DEF_minSizePre),  0, 6, "px²");
-		gd.addNumericField("Max. presynaptic particle size:", Prefs.get("synapsecounter.maxSizePre", DEF_maxSizePre), 0, 6, "px²");
+		gd.addNumericField("Presynaptic particle size:",       Prefs.get("synapsecounter.minSizePre", DEF_minSizePre), 0, 6, "px² or voxels");
+		gd.addNumericField("Max. presynaptic particle size:",  Prefs.get("synapsecounter.maxSizePre", DEF_maxSizePre), 0, 6, "px² or voxels");
 
-		gd.addNumericField("Min. postsynaptic particle size:", Prefs.get("synapsecounter.minSizePos", DEF_minSizePos),  0, 6, "px²");
-		gd.addNumericField("Max. postsynaptic particle size:", Prefs.get("synapsecounter.maxSizePos", DEF_maxSizePos), 0, 6, "px²");
+		gd.addNumericField("Min. postsynaptic particle size:", Prefs.get("synapsecounter.minSizePos", DEF_minSizePos), 0, 6, "px² or voxels");
+		gd.addNumericField("Max. postsynaptic particle size:", Prefs.get("synapsecounter.maxSizePos", DEF_maxSizePos), 0, 6, "px² or voxels");
 
 		p = new Panel();
 		p.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 0));
@@ -475,6 +516,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		doSubFolders  = doSubFoldersButton.getState();
 		doOutput      = gd.getNextBoolean();
 		doOpenedImage = (inputBox.getSelectedCheckbox() == doOpenedImageButton);
+		is3d          = (dimBox.getSelectedCheckbox()   == is3dButton);
 
 		if (!inputDirField.getText().equals(""))  inputDir  = inputDirField.getText();
 		if (!outputDirField.getText().equals("")) {
@@ -502,6 +544,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 		Prefs.set("synapsecounter.doOpenedImage",  doOpenedImage);
 		Prefs.set("synapsecounter.doSubFolders",   doSubFolders );
 		Prefs.set("synapsecounter.doOutput",       doOutput     );
+		Prefs.set("synapsecounter.is3d",           is3d         );
 		return true;
 	}
 
@@ -509,6 +552,7 @@ public class Synapse_Counter implements PlugIn, ActionListener, DialogListener, 
 	 * Reset default settings for the parameters.
 	 */
 	private void resetDeafults() {
+		Prefs.set("synapsecounter.is3d",             DEF_is3d            );
 		Prefs.set("synapsecounter.type",             DEF_type            );
 		Prefs.set("synapsecounter.rollBallRad",      DEF_rollBallRad     );
 		Prefs.set("synapsecounter.maxFiltRad",       DEF_maxFiltRad      );
